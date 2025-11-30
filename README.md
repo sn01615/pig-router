@@ -1,3 +1,31 @@
+### install
+```
+composer require pig/router
+```
+
+example 0:
+```php
+$router = new \Pig\Router\Router();
+try {
+    $router->loadRoutes(__DIR__ . "/api.php");
+    $router->dispatch();
+} catch (\Pig\Router\NotFoundException $e) {
+    $_run_ci_ = true;
+} catch (\Pig\Router\InvalidCallbackException $e) {
+    echo $e->getMessage();
+}
+```
+api.php:
+```php
+/**
+ * @var \Pig\Router\Router $router
+ */
+$router->get('/test/test1', [\pilots\TestController::class, 'test01']);
+$router->group('/test', [], function (\Pig\Router\Router $router) {
+    $router->post('/create', [\pilots\UserController::class, 'create01']);
+});
+```
+
 example 1:
 ```php
 require dirname(__DIR__) . '/vendor/autoload.php';
