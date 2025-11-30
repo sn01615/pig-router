@@ -34,6 +34,33 @@ class Router
         return $this->addRoute('PATCH', $pattern, $callback);
     }
 
+    public function get_post($pattern, $callback)
+    {
+        $routers = [];
+        foreach ([
+                     'GET',
+                     'POST',
+                 ] as $method) {
+            $routers[] = $this->addRoute($method, $pattern, $callback);
+        }
+        return $routers;
+    }
+
+    public function any($pattern, $callback)
+    {
+        $routers = [];
+        foreach ([
+                     'GET',
+                     'POST',
+                     'PUT',
+                     'DELETE',
+                     'PATCH',
+                 ] as $method) {
+            $routers[] = $this->addRoute($method, $pattern, $callback);
+        }
+        return $routers;
+    }
+
     private function addRoute($method, $pattern, $callback)
     {
         $fullPattern = $this->groupPrefix . $pattern;
@@ -49,7 +76,7 @@ class Router
 
     /**
      * @param string $prefix
-     * @param array $middleware
+     * @param array|string $middleware
      * @param callable|string $callback
      * @return void
      */
@@ -68,6 +95,7 @@ class Router
     }
 
     /**
+     * @throws \Pig\Router\NotFoundException
      * @throws \Exception
      */
     public function dispatch($method = null, $uri = null)
@@ -124,7 +152,6 @@ class Router
 
         // 未找到路由
         $this->handleNotFound();
-        return null;
     }
 
     private function matchRoute($pattern, $uri)
@@ -202,17 +229,25 @@ class Router
             }
         }
 
-        throw new \Exception("Invalid callback");
+        throw new InvalidCallbackException("Invalid callback");
     }
 
+    /**
+     * @throws \Pig\Router\NotFoundException
+     */
     private function handleNotFound()
     {
-        http_response_code(404);
-        echo "404 Not Found";
+        throw new NotFoundException("404 Not Found");
     }
 
     public function compatible_mode($string)
     {
         $this->compatible = $string;
+    }
+
+    public function loadRoutes($file)
+    {
+        $router = $this;
+        include $file;
     }
 }
