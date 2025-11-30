@@ -7,7 +7,7 @@ class Router
     private $routes = [];
     private $groupPrefix = '';
     private $groupMiddleware = [];
-    private $namedRoutes = [];
+    private $compatible = '';
 
     public function get($pattern, $callback)
     {
@@ -79,6 +79,9 @@ class Router
         if ($uri === null) {
             if (isset($_SERVER['REQUEST_URI'])) {
                 $uri = $_SERVER['REQUEST_URI'];
+                if ($this->compatible && isset($_GET[$this->compatible])) {
+                    $uri = $_GET[$this->compatible];
+                }
                 $uri = parse_url($uri, PHP_URL_PATH);
             } else {
                 $argv = isset($_SERVER['argv']) ? $_SERVER['argv'] : [];
@@ -208,18 +211,8 @@ class Router
         echo "404 Not Found";
     }
 
-    public function url($name, $params = [])
+    public function compatible_mode($string)
     {
-        if (!isset($this->namedRoutes[$name])) {
-            return null;
-        }
-
-        $pattern = $this->namedRoutes[$name];
-
-        foreach ($params as $key => $value) {
-            $pattern = str_replace("{{$key}}", $value, $pattern);
-        }
-
-        return $pattern;
+        $this->compatible = $string;
     }
 }
