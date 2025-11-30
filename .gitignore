@@ -1,0 +1,7 @@
+/composer.lock
+/vendor/
+/.idea/.gitignore
+/.idea/modules.xml
+/.idea/php.xml
+/.idea/router.iml
+/.idea/vcs.xml
