@@ -1,0 +1,9 @@
+{
+  "name": "pig/router",
+  "version": "1.0.0",
+  "autoload": {
+    "psr-4": {
+      "Pig\\Router\\": "src/"
+    }
+  }
+}
