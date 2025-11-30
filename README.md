@@ -52,6 +52,7 @@ $router->dispatch();
 ```
 example 2:
 ```php
+require dirname(__DIR__) . '/vendor/autoload.php';
 
 class UserController
 {
@@ -89,5 +90,8 @@ $router->get('/users/{id}', 'UserController@show');
 $router->post('/users', 'UserController@create');
 $router->put('/users/{id}', 'UserController@update');
 $router->delete('/users/{id}', 'UserController@delete');
+
+//$router->get('/tempfile_1764506562513.php', 'UserController@index');
+$router->dispatch();
 
 ```
