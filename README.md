@@ -10,7 +10,7 @@ try {
     $router->loadRoutes(__DIR__ . "/api.php");
     $router->dispatch();
 } catch (\Pig\Router\NotFoundException $e) {
-    $_run_ci_ = true;
+    # 404
 } catch (\Pig\Router\InvalidCallbackException $e) {
     echo $e->getMessage();
 }
