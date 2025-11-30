@@ -73,13 +73,28 @@ class Router
     public function dispatch($method = null, $uri = null)
     {
         if ($method === null) {
-            $method = $_SERVER['REQUEST_METHOD'];
+            $method = empty($_SERVER['REQUEST_METHOD']) ? 'GET' : $_SERVER['REQUEST_METHOD'];
         }
 
         if ($uri === null) {
-            $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            if (isset($_SERVER['REQUEST_URI'])) {
+                $uri = $_SERVER['REQUEST_URI'];
+                $uri = parse_url($uri, PHP_URL_PATH);
+            } else {
+                $argv = isset($_SERVER['argv']) ? $_SERVER['argv'] : [];
+                if (isset($argv[1])) {
+                    $_uri = [];
+                    foreach ($argv as $key => $_argv) {
+                        if ($key >= 1) $_uri[] = $_argv;
+                    }
+                    $uri = implode('/', $_uri);
+                } else {
+                    $uri = '/';
+                }
+            }
         }
 
+        /** @var Route $route */
         foreach ($this->routes as $route) {
             if ($route->getMethod() !== $method) {
                 continue;
@@ -112,12 +127,12 @@ class Router
     private function matchRoute($pattern, $uri)
     {
         // 将路由模式转换为正则表达式
-        $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $pattern);
+        $pattern = preg_replace('/\{([^}]+)}/', '([^/]+)', $pattern);
         $pattern = '#^' . $pattern . '$#';
 
         if (preg_match($pattern, $uri, $matches)) {
             // 提取参数名
-            preg_match_all('/\{([^}]+)\}/', $pattern, $paramNames);
+            preg_match_all('/\{([^}]+)}/', $pattern, $paramNames);
             $params = [];
 
             for ($i = 1; $i < count($matches); $i++) {
@@ -165,7 +180,24 @@ class Router
                     if (method_exists($instance, $method)) {
                         return call_user_func_array([$instance, $method], $params);
                     }
+                    throw new \Exception("Method does not exist");
                 }
+            }
+        } elseif (is_array($callback)) {
+            // [控制器, 方法] 形式
+            if (count($callback) == 2 && is_string($callback[0]) && is_string($callback[1])) {
+                if (class_exists($callback[0])) {
+                    $instance = new $callback[0]();
+                    if (method_exists($instance, $callback[1])) {
+                        return call_user_func_array([$instance, $callback[1]], $params);
+                    }
+                    throw new \Exception("Method does not exist");
+                }
+            }
+        } elseif (is_object($callback)) {
+            // 对象实例
+            if (method_exists($callback, 'handle')) {
+                return call_user_func_array([$callback, 'handle'], $params);
             }
         }
 

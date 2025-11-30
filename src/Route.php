@@ -7,8 +7,7 @@ class Route
     private $pattern;
     private $callback;
     private $middleware = [];
-    private $name;
-    
+
     public function __construct($method, $pattern, $callback)
     {
         $this->method = $method;
@@ -25,13 +24,7 @@ class Route
         }
         return $this;
     }
-    
-    public function name($name)
-    {
-        $this->name = $name;
-        return $this;
-    }
-    
+
     public function getMethod()
     {
         return $this->method;
@@ -50,10 +43,5 @@ class Route
     public function getMiddleware()
     {
         return $this->middleware;
-    }
-    
-    public function getName()
-    {
-        return $this->name;
     }
 }
