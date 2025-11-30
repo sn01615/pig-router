@@ -167,10 +167,6 @@ class Router
      */
     private function executeCallback($callback, $params)
     {
-        if (is_callable($callback)) {
-            return call_user_func_array($callback, $params);
-        }
-
         if (is_string($callback)) {
             // 控制器@方法 格式
             if (strpos($callback, '@') !== false) {
@@ -194,6 +190,8 @@ class Router
                     throw new \Exception("Method does not exist");
                 }
             }
+        } elseif (is_callable($callback)) {
+            return call_user_func_array($callback, $params);
         } elseif (is_object($callback)) {
             // 对象实例
             if (method_exists($callback, 'handle')) {
