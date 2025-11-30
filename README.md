@@ -23,6 +23,8 @@ api.php:
 $router->get('/test/test1', [\pilots\TestController::class, 'test01']);
 $router->group('/test', [], function (\Pig\Router\Router $router) {
     $router->post('/create', [\pilots\UserController::class, 'create01']);
+    // 带参数的路由
+    $router->get('/info/(\w+)', [\pilots\UserController::class, 'info01']);
 });
 ```
 
