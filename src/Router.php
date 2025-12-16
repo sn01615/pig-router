@@ -110,7 +110,7 @@ class Router
                 if ($this->compatible && isset($_GET[$this->compatible])) {
                     $uri = $_GET[$this->compatible];
                 }
-                $uri = parse_url($uri, PHP_URL_PATH);
+                $uri = explode('?', $uri)[0];
             } else {
                 $argv = isset($_SERVER['argv']) ? $_SERVER['argv'] : [];
                 if (isset($argv[1])) {
@@ -156,20 +156,22 @@ class Router
 
     private function matchRoute($pattern, $uri)
     {
-        // 将路由模式转换为正则表达式
-        $pattern = preg_replace('/\{([^}]+)}/', '([^/]+)', $pattern);
-        $pattern = '#^' . $pattern . '$#';
+        // 转义特殊字符并构建安全的正则表达式
+        $escapedPattern = preg_quote($pattern, '#');
+        // 使用更精确的替换规则
+        $regexPattern = '#^' . preg_replace('/\\\{([^\/]+?)\\\}/', '([^/]+)', $escapedPattern) . '$#';
 
-        if (preg_match($pattern, $uri, $matches)) {
-            // 提取参数名
-            preg_match_all('/\{([^}]+)}/', $pattern, $paramNames);
+        if (preg_match($regexPattern, $uri, $matches)) {
+            // 提取参数名称
+            preg_match_all('/\{([^\/}]+)}/', $pattern, $paramNames);
+            $paramNamesList = $paramNames[1];
+
             $params = [];
-
+            // 确保参数名称和匹配值对应正确
             for ($i = 1; $i < count($matches); $i++) {
-                $paramName = isset($paramNames[1][$i - 1]) ? $paramNames[1][$i - 1] : "param$i";
+                $paramName = isset($paramNamesList[$i - 1]) ? $paramNamesList[$i - 1] : "param$i";
                 $params[$paramName] = $matches[$i];
             }
-
             return $params;
         }
 
