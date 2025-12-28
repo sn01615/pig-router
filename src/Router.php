@@ -114,7 +114,7 @@ class Router
             } else {
                 $argv = isset($_SERVER['argv']) ? $_SERVER['argv'] : [];
                 if (isset($argv[1])) {
-                    $_uri = [];
+                    $_uri = [''];
                     foreach ($argv as $key => $_argv) {
                         if ($key >= 1) $_uri[] = $_argv;
                     }
