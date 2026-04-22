@@ -76,29 +76,12 @@ class Router
 
     public function get_post($pattern, $callback)
     {
-        $routers = [];
-        foreach ([
-                     'GET',
-                     'POST',
-                 ] as $method) {
-            $routers[] = $this->addRoute($method, $pattern, $callback);
-        }
-        return $routers;
+        return $this->addRoute('GET|POST', $pattern, $callback);
     }
 
     public function any($pattern, $callback)
     {
-        $routers = [];
-        foreach ([
-                     'GET',
-                     'POST',
-                     'PUT',
-                     'DELETE',
-                     'PATCH',
-                 ] as $method) {
-            $routers[] = $this->addRoute($method, $pattern, $callback);
-        }
-        return $routers;
+        return $this->addRoute('*', $pattern, $callback);
     }
 
     /**
@@ -144,8 +127,12 @@ class Router
 
         /** @var Route $route */
         foreach ($this->routes as $route) {
-            if ($route->getMethod() !== $method) {
-                continue;
+            $route_method = $route->getMethod();
+            if ($route_method !== '*') {
+                $route_methods = explode('|', $route_method);
+                if (!in_array($method, $route_methods)) {
+                    continue;
+                }
             }
 
             $pattern = $route->getPattern();
@@ -234,14 +221,11 @@ class Router
 
     private function matchRoute($pattern, $uri)
     {
-        // 转义特殊字符并构建安全的正则表达式
-        $escapedPattern = preg_quote($pattern, '#');
-        // 使用更精确的替换规则
-        $regexPattern = '#^' . preg_replace('/\\\{([^\/]+?)\\\}/', '([^/]+)', $escapedPattern) . '$#';
+        $regexPattern = '#^' . preg_replace('/{(\w+)}/', '(\w+)', $pattern) . '$#';
 
         if (preg_match($regexPattern, $uri, $matches)) {
             // 提取参数名称
-            preg_match_all('/\{([^\/}]+)}/', $pattern, $paramNames);
+            preg_match_all('/{(\w+)}/', $pattern, $paramNames);
             $paramNamesList = $paramNames[1];
 
             $params = [];
