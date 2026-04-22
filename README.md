@@ -2,6 +2,11 @@
 
 A simple and lightweight PHP routing library that supports HTTP methods, route grouping, middleware, and parameter handling.
 
+**Note:** This repository includes a multilingual README. Please check other language versions for more information.
+
+- [English](README.md)
+- [中文](README_zh.md)
+
 ## Installation
 
 Install via Composer:

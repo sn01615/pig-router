@@ -135,28 +135,11 @@ class Router
         }
 
         if ($method === null) {
-            $method = empty($_SERVER['REQUEST_METHOD']) ? 'GET' : $_SERVER['REQUEST_METHOD'];
+            $method = $this->getMethod();
         }
 
         if ($uri === null) {
-            if (isset($_SERVER['REQUEST_URI'])) {
-                $uri = $_SERVER['REQUEST_URI'];
-                if ($this->compatible && isset($_GET[$this->compatible])) {
-                    $uri = $_GET[$this->compatible];
-                }
-                $uri = explode('?', $uri)[0];
-            } else {
-                $argv = isset($_SERVER['argv']) ? $_SERVER['argv'] : [];
-                if (isset($argv[1])) {
-                    $_uri = [''];
-                    foreach ($argv as $key => $_argv) {
-                        if ($key >= 1) $_uri[] = $_argv;
-                    }
-                    $uri = implode('/', $_uri);
-                } else {
-                    $uri = '/';
-                }
-            }
+            $uri = $this->getUri();
         }
 
         /** @var Route $route */
@@ -208,6 +191,45 @@ class Router
         }
 
         return true;
+    }
+
+    private function getMethod()
+    {
+        return empty($_SERVER['REQUEST_METHOD']) ? 'GET' : $_SERVER['REQUEST_METHOD'];
+    }
+
+    private function getUri()
+    {
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $uri = $this->getWebUri();
+        } else {
+            $uri = $this->getCliUri();
+        }
+        return $uri;
+    }
+
+    private function getWebUri()
+    {
+        $uri = $_SERVER['REQUEST_URI'];
+        if ($this->compatible && isset($_GET[$this->compatible])) {
+            $uri = $_GET[$this->compatible];
+        }
+        return explode('?', $uri)[0];
+    }
+
+    private function getCliUri()
+    {
+        $argv = isset($_SERVER['argv']) ? $_SERVER['argv'] : [];
+        if (isset($argv[1])) {
+            $_uri = [''];
+            foreach ($argv as $key => $_argv) {
+                if ($key >= 1) $_uri[] = $_argv;
+            }
+            $uri = implode('/', $_uri);
+        } else {
+            $uri = '/';
+        }
+        return $uri;
     }
 
     private function matchRoute($pattern, $uri)
