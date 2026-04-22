@@ -231,8 +231,11 @@ class Router
             $params = [];
             // 确保参数名称和匹配值对应正确
             for ($i = 1; $i < count($matches); $i++) {
-                $paramName = isset($paramNamesList[$i - 1]) ? $paramNamesList[$i - 1] : "param$i";
-                $params[$paramName] = $matches[$i];
+                if (isset($paramNamesList[$i - 1])) {
+                    $params[$paramNamesList[$i - 1]] = $matches[$i];
+                } else {
+                    $params[] = $matches[$i];
+                }
             }
             return $params;
         }
