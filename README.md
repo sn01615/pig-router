@@ -70,6 +70,8 @@ The router supports the following HTTP methods:
 - `put($pattern, $callback)`
 - `delete($pattern, $callback)`
 - `patch($pattern, $callback)`
+- `head($pattern, $callback)`
+- `options($pattern, $callback)`
 - `get_post($pattern, $callback)` - Accepts both GET and POST
 - `any($pattern, $callback)` - Accepts all methods
 
@@ -90,6 +92,13 @@ $router->get('/admin', function() {
 $router->group('/admin', [\App\Middleware\AuthMiddleware::class], function ($router) {
     $router->get('/dashboard', [\App\Controllers\AdminController::class, 'dashboard']);
 });
+```
+
+You can also add global before and after middleware:
+
+```php
+$router->before([\App\Middleware\LoggingMiddleware::class, 'logRequest']);
+$router->after([\App\Middleware\LoggingMiddleware::class, 'logResponse']);
 ```
 
 Middleware can be:
@@ -143,12 +152,16 @@ $result = $router->dispatch('GET', '/home');
 - `put(string $pattern, callable|array|string $callback)`: Register a PUT route
 - `delete(string $pattern, callable|array|string $callback)`: Register a DELETE route
 - `patch(string $pattern, callable|array|string $callback)`: Register a PATCH route
+- `head(string $pattern, callable|array|string $callback)`: Register a HEAD route
+- `options(string $pattern, callable|array|string $callback)`: Register an OPTIONS route
 - `get_post(string $pattern, callable|array|string $callback)`: Register GET and POST routes
 - `any(string $pattern, callable|array|string $callback)`: Register all HTTP method routes
 - `group(string $prefix, array|string $middleware, callable $callback)`: Group routes
 - `dispatch(string|null $method, string|null $uri)`: Dispatch the request
 - `loadRoutes(string $file)`: Load routes from a file
 - `compatible_mode(string $string)`: Enable compatible mode
+- `before(mixed $middleware)`: Add global before middleware
+- `after(mixed $middleware)`: Add global after middleware
 
 ### Route Class
 
@@ -160,6 +173,7 @@ $result = $router->dispatch('GET', '/home');
 
 - `NotFoundException`: Thrown when no route matches
 - `InvalidCallbackException`: Thrown when callback is invalid
+- `MethodNotFoundException`: Thrown when a method does not exist in a controller
 
 ## Testing
 

@@ -4,14 +4,34 @@ namespace Pig\Router;
 
 class Router
 {
+
+    /** @var Route[] */
     private $routes = [];
     private $groupPrefix = '';
+    /** @var array */
     private $groupMiddleware = [];
     private $compatible = '';
+    /** @var array */
+    private $beforeMiddleware = [];
+    /** @var array */
+    private $afterMiddleware = [];
 
     public function get($pattern, $callback)
     {
         return $this->addRoute('GET', $pattern, $callback);
+    }
+
+    private function addRoute($method, $pattern, $callback)
+    {
+        $fullPattern = $this->groupPrefix . $pattern;
+        $route = new Route($method, $fullPattern, $callback);
+
+        if (!empty($this->groupMiddleware)) {
+            $route->middleware($this->groupMiddleware);
+        }
+
+        $this->routes[] = $route;
+        return $route;
     }
 
     public function post($pattern, $callback)
@@ -32,6 +52,26 @@ class Router
     public function patch($pattern, $callback)
     {
         return $this->addRoute('PATCH', $pattern, $callback);
+    }
+
+    /**
+     * @param string $pattern
+     * @param mixed $callback
+     * @return Route
+     */
+    public function head($pattern, $callback)
+    {
+        return $this->addRoute('HEAD', $pattern, $callback);
+    }
+
+    /**
+     * @param string $pattern
+     * @param mixed $callback
+     * @return Route
+     */
+    public function options($pattern, $callback)
+    {
+        return $this->addRoute('OPTIONS', $pattern, $callback);
     }
 
     public function get_post($pattern, $callback)
@@ -61,19 +101,6 @@ class Router
         return $routers;
     }
 
-    private function addRoute($method, $pattern, $callback)
-    {
-        $fullPattern = $this->groupPrefix . $pattern;
-        $route = new Route($method, $fullPattern, $callback);
-
-        if (!empty($this->groupMiddleware)) {
-            $route->middleware($this->groupMiddleware);
-        }
-
-        $this->routes[] = $route;
-        return $route;
-    }
-
     /**
      * @param string $prefix
      * @param array|string $middleware
@@ -100,6 +127,13 @@ class Router
      */
     public function dispatch($method = null, $uri = null)
     {
+        // Execute before middleware
+        foreach ($this->beforeMiddleware as $mw) {
+            if (!$this->executeMiddleware($mw)) {
+                return null;
+            }
+        }
+
         if ($method === null) {
             $method = empty($_SERVER['REQUEST_METHOD']) ? 'GET' : $_SERVER['REQUEST_METHOD'];
         }
@@ -138,20 +172,42 @@ class Router
             $params = $this->matchRoute($pattern, $uri);
             if ($params !== false) {
                 // 执行中间件
-                $middleware = $route->getMiddleware();
-                foreach ($middleware as $mw) {
+                foreach ($route->getMiddleware() as $mw) {
                     if (!$this->executeMiddleware($mw)) {
                         return null;
                     }
                 }
 
                 // 执行回调函数
-                return $this->executeCallback($callback, $params);
+                $result = $this->executeCallback($callback, $params);
+
+                // Execute after middleware
+                foreach ($this->afterMiddleware as $mw) {
+                    $this->executeMiddleware($mw);
+                }
+
+                return $result;
             }
         }
 
         // 未找到路由
         $this->handleNotFound();
+    }
+
+    private function executeMiddleware($middleware)
+    {
+        if (is_callable($middleware)) {
+            return call_user_func($middleware) !== false;
+        }
+
+        if (is_string($middleware) && class_exists($middleware)) {
+            $instance = new $middleware();
+            if (method_exists($instance, 'handle')) {
+                return $instance->handle() !== false;
+            }
+        }
+
+        return true;
     }
 
     private function matchRoute($pattern, $uri)
@@ -178,38 +234,24 @@ class Router
         return false;
     }
 
-    private function executeMiddleware($middleware)
-    {
-        if (is_callable($middleware)) {
-            return call_user_func($middleware) !== false;
-        }
-
-        if (is_string($middleware) && class_exists($middleware)) {
-            $instance = new $middleware();
-            if (method_exists($instance, 'handle')) {
-                return $instance->handle() !== false;
-            }
-        }
-
-        return true;
-    }
-
     /**
-     * @throws \Exception
+     * @throws \Pig\Router\MethodNotFoundException
+     * @throws \Pig\Router\InvalidCallbackException
      */
     private function executeCallback($callback, $params)
     {
         if (is_string($callback)) {
             // 控制器@方法 格式
             if (strpos($callback, '@') !== false) {
-                list($controller, $method) = explode('@', $callback);
+                list($controller, $method) = explode('@', $callback, 2);
                 if (class_exists($controller)) {
                     $instance = new $controller();
                     if (method_exists($instance, $method)) {
                         return call_user_func_array([$instance, $method], $params);
                     }
-                    throw new \Exception("Method does not exist");
+                    throw new MethodNotFoundException("Method '{$method}' does not exist in class '{$controller}'");
                 }
+                throw new InvalidCallbackException("Controller class '{$controller}' does not exist");
             }
         } elseif (is_array($callback)) {
             // [控制器, 方法] 形式
@@ -219,8 +261,9 @@ class Router
                     if (method_exists($instance, $callback[1])) {
                         return call_user_func_array([$instance, $callback[1]], $params);
                     }
-                    throw new \Exception("Method does not exist");
+                    throw new MethodNotFoundException("Method '{$callback[1]}' does not exist in class '{$callback[0]}'");
                 }
+                throw new InvalidCallbackException("Controller class '{$callback[0]}' does not exist");
             }
         } elseif (is_callable($callback)) {
             return call_user_func_array($callback, $params);
@@ -251,5 +294,25 @@ class Router
     {
         $router = $this;
         include $file;
+    }
+
+    /**
+     * @param mixed $middleware
+     * @return $this
+     */
+    public function before($middleware)
+    {
+        $this->beforeMiddleware[] = $middleware;
+        return $this;
+    }
+
+    /**
+     * @param mixed $middleware
+     * @return $this
+     */
+    public function after($middleware)
+    {
+        $this->afterMiddleware[] = $middleware;
+        return $this;
     }
 }
