@@ -182,11 +182,35 @@ $result = $router->dispatch('GET', '/home');
 
 ## 测试
 
-运行测试：
+路由器包含使用 PHPUnit 的全面测试套件。
+
+### 运行测试
+
+安装依赖并运行测试：
 
 ```bash
-php test.php
+composer install
+composer test
 ```
+
+或直接运行 PHPUnit：
+
+```bash
+vendor/bin/phpunit
+```
+
+### 测试覆盖
+
+测试套件涵盖：
+
+- 所有 HTTP 方法的路由注册
+- 带参数和不带参数的路由分发
+- 路由分组和中间件
+- 异常处理
+- 兼容模式功能
+- CLI 分发
+- 控制器回调（数组和字符串格式）
+- 前后中间件
 
 ## 许可证
 

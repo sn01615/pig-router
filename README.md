@@ -182,11 +182,35 @@ $result = $router->dispatch('GET', '/home');
 
 ## Testing
 
-Run tests with:
+The router includes a comprehensive test suite using PHPUnit.
+
+### Running Tests
+
+Install dependencies and run tests:
 
 ```bash
-php test.php
+composer install
+composer test
 ```
+
+Or run PHPUnit directly:
+
+```bash
+vendor/bin/phpunit
+```
+
+### Test Coverage
+
+The test suite covers:
+
+- Route registration for all HTTP methods
+- Route dispatching with and without parameters
+- Route grouping and middleware
+- Exception handling
+- Compatible mode functionality
+- CLI dispatching
+- Controller callbacks (array and string formats)
+- Before/after middleware
 
 ## License
 
